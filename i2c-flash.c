@@ -6,6 +6,7 @@
 const uint8_t emulated_addr = 0x52;
 
 const uint8_t emulated_data[] = "boot@USB";
+//const uint8_t emulated_data[] = "boot@SDC";
 const uint8_t emulated_data_start = 0xf8;
 
 ISR(TWI_vect) {
