@@ -3,10 +3,18 @@
 #include <avr/sleep.h>
 #include <util/twi.h>
 
+#define _BOOT_1 SPI
+#define _BOOT_4 SDC
+#define _BOOT_5 USB
+
+#define _BOOT_(s) "boot@" #s
+#define _BOOT(s) _BOOT_(s)
+#define _SEL_(s) _BOOT_ ## s
+#define _SEL(s) _SEL_(s)
+
 const uint8_t emulated_addr = 0x52;
 
-const uint8_t emulated_data[] = "boot@USB";
-//const uint8_t emulated_data[] = "boot@SDC";
+const uint8_t emulated_data[] = _BOOT(_SEL(BOOT_SEL));
 const uint8_t emulated_data_start = 0xf8;
 
 ISR(TWI_vect) {
