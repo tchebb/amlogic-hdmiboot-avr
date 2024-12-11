@@ -22,12 +22,20 @@ ISR(TWI_vect) {
 
 	uint8_t offset;
 
-	switch (TWSR) {
+	switch (TW_STATUS) {
+	case TW_BUS_ERROR:
+		TWCR = _BV(TWEN) | _BV(TWIE) | _BV(TWEA) | _BV(TWINT) | _BV(TWSTO);
+		while (TWCR & _BV(TWSTO))
+			continue;
+	case TW_NO_INFO:
+		return;
 	case TW_SR_DATA_ACK:
+	case TW_SR_GCALL_DATA_ACK:
 		// Received address command.
 		cur_addr = TWDR;
 		break;
 	case TW_ST_SLA_ACK:
+	case TW_ST_ARB_LOST_SLA_ACK:
 	case TW_ST_DATA_ACK:
 		// Received data read at current address.
 		offset = cur_addr - emulated_data_start;
@@ -36,18 +44,20 @@ ISR(TWI_vect) {
 	}
 
 	// Acknowledge interrupt to let hardware continue.
-	TWCR |= _BV(TWINT);
+	TWCR = _BV(TWEN) | _BV(TWIE) | _BV(TWINT) | _BV(TWEA);
 }
 
 int main() {
 	// Enable internal pull-ups on I2C pins.
-	PORTC = _BV(4) | _BV(5);
+	PORTC = _BV(PORTC4) | _BV(PORTC5);
 
 	// Configure slave address.
 	TWAR = emulated_addr << 1;
 
 	// Turn on TWI in slave mode, enable interrupt.
 	sei();
+	TWSR = TW_NO_INFO & 1;
+	TWBR = 18;
 	TWCR = _BV(TWEA) | _BV(TWEN) | _BV(TWIE);
 
 	// Sleep the CPU, since we do all our work in interrupts.
